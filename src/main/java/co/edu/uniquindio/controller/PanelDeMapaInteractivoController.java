@@ -35,13 +35,15 @@ public class PanelDeMapaInteractivoController {
     public void initialize() {
         appModel = AppModel.getInstance();
         webEngine = webView.getEngine();
+
         webEngine.load(getClass().getResource("/html/mapa.html").toExternalForm());
 
-        // Esperar a que cargue el HTML
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
-                cargarMarcadoresEnMapa();
-                poblarComboBoxes();
+                Platform.runLater(() -> {
+                    cargarTodoOptimizado();
+                    poblarComboBoxes();
+                });
             }
         });
 
@@ -49,43 +51,47 @@ public class PanelDeMapaInteractivoController {
         btnCentrar.setOnAction(e -> buscarUbicacion());
     }
 
-    /** Carga marcadores y rutas en el mapa */
-    private void cargarMarcadoresEnMapa() {
+    private void cargarTodoOptimizado() {
+
         List<Ubicacion> ubicaciones = appModel.getGrafoRutas().getUbicaciones();
 
+        StringBuilder script = new StringBuilder();
+
+        // --------- MARCADORES ----------
         for (Ubicacion u : ubicaciones) {
+
             String color = obtenerColorPorUrgencia(u.getNivelUrgencia());
             String recursos = u.recursosComoString();
             String equipos = appModel.getGestorEquipos().getListaEquipos().stream()
                     .filter(eq -> eq.getZonaAsignada() != null && eq.getZonaAsignada().equals(u))
                     .map(Equipo::getNombre)
                     .collect(Collectors.joining(", "));
+
             String popup = u.getNombre() + "<br>Tipo: " + u.getTipo() +
                     "<br>Afectados: " + u.getPersonasAfectadas() +
                     "<br>Recursos: " + recursos +
                     "<br>Equipos: " + (equipos.isEmpty() ? "Ninguno" : equipos);
 
-            String js = String.format(
-                    "agregarMarcadorAvanzado(%f, %f, '%s', '%s', '%s');",
+            script.append(String.format(
+                    "agregarMarcadorAvanzado(%f,%f,'%s','%s','%s');",
                     u.getLatitud(), u.getLongitud(), u.getNombre(), popup, color
-            );
-
-            Platform.runLater(() -> webEngine.executeScript(js));
+            ));
         }
 
-        // Dibujar rutas existentes
+        // ---------- RUTAS ----------
         for (Ubicacion origen : ubicaciones) {
             for (Ruta ruta : appModel.getGrafoRutas().getAdyacencias().get(origen)) {
                 if (ruta.isDisponible()) {
-                    String jsRuta = String.format(
-                            "agregarRuta(%f, %f, %f, %f);",
+                    script.append(String.format(
+                            "agregarRuta(%f,%f,%f,%f);",
                             ruta.getOrigen().getLatitud(), ruta.getOrigen().getLongitud(),
                             ruta.getDestino().getLatitud(), ruta.getDestino().getLongitud()
-                    );
-                    Platform.runLater(() -> webEngine.executeScript(jsRuta));
+                    ));
                 }
             }
         }
+
+        webEngine.executeScript(script.toString());
     }
 
     private String obtenerColorPorUrgencia(int nivel) {
@@ -94,7 +100,6 @@ public class PanelDeMapaInteractivoController {
         else return "blue";
     }
 
-    /** Llena ComboBoxes de origen y destino */
     private void poblarComboBoxes() {
         List<Ubicacion> ubicaciones = appModel.getGrafoRutas().getUbicaciones();
         for (Ubicacion u : ubicaciones) {
@@ -103,8 +108,8 @@ public class PanelDeMapaInteractivoController {
         }
     }
 
-    /** Mostrar camino más corto resaltado */
     private void mostrarCaminoMasCorto() {
+
         String origenNombre = cbOrigen.getValue();
         String destinoNombre = cbDestino.getValue();
         if (origenNombre == null || destinoNombre == null) return;
@@ -112,6 +117,7 @@ public class PanelDeMapaInteractivoController {
         Ubicacion origen = appModel.getGrafoRutas().getUbicaciones().stream()
                 .filter(u -> u.getNombre().equals(origenNombre))
                 .findFirst().orElse(null);
+
         Ubicacion destino = appModel.getGrafoRutas().getUbicaciones().stream()
                 .filter(u -> u.getNombre().equals(destinoNombre))
                 .findFirst().orElse(null);
@@ -124,6 +130,7 @@ public class PanelDeMapaInteractivoController {
         Platform.runLater(() -> webEngine.executeScript("limpiarCaminos();"));
 
         StringBuilder jsArray = new StringBuilder("[");
+
         for (Ubicacion u : camino) {
             jsArray.append("[").append(u.getLatitud()).append(",").append(u.getLongitud()).append("],");
         }
@@ -134,7 +141,6 @@ public class PanelDeMapaInteractivoController {
         Platform.runLater(() -> webEngine.executeScript(js));
     }
 
-    /** Búsqueda rápida de ubicación y centrado */
     private void buscarUbicacion() {
         String busqueda = txtBuscar.getText().trim();
         if (busqueda.isEmpty()) return;
