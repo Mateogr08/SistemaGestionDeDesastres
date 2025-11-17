@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="600.0" prefWidth="771.0" style="-fx-background-color: #f5f5f5;"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="co.edu.uniquindio.controller.PanelDeRutasController">
+
+    <!-- Encabezado -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="10.0"
+              style="-fx-padding: 20px; -fx-background-color: #FFFFFF;">
+            <Label text="Panel de Rutas"
+                   style="-fx-font-size: 24px; -fx-text-fill: black; -fx-font-weight: bold;" />
+        </HBox>
+    </top>
+
+    <!-- Contenido principal -->
+    <center>
+        <VBox prefHeight="525.0" prefWidth="703.0" spacing="20" style="-fx-padding: 20px;">
+
+            <!-- Tabla de Rutas -->
+            <TitledPane expanded="true" text="Rutas Registradas">
+                <TableView fx:id="tablaRutas" prefHeight="230">
+                    <columns>
+                        <TableColumn fx:id="colOrigen" prefWidth="150" text="Origen" />
+                        <TableColumn fx:id="colDestino" prefWidth="150" text="Destino" />
+                        <TableColumn fx:id="colDistancia" prefWidth="130" text="Distancia (km)" />
+                        <TableColumn fx:id="colEstado" prefWidth="150" text="Estado" />
+                    </columns>
+                </TableView>
+            </TitledPane>
+
+            <!-- Planificación de evacuación -->
+            <TitledPane expanded="true" text="Planificación de Evacuaciones">
+                <VBox spacing="15" style="-fx-padding: 10px;">
+
+                    <!-- Campos -->
+                    <HBox spacing="20">
+                        <VBox spacing="8">
+                            <Label text="Seleccionar Ruta:" />
+                            <ComboBox fx:id="comboRutas" prefWidth="200" />
+                        </VBox>
+
+                        <VBox spacing="8">
+                            <Label text="Número de personas:" />
+                            <TextField fx:id="txtPersonas" prefWidth="200" promptText="Ej: 45" />
+                        </VBox>
+                    </HBox>
+
+                    <!-- Botones -->
+                    <HBox alignment="CENTER_RIGHT" spacing="15">
+                        <Button fx:id="btnPlanificar"
+                                onAction="#btnPlanificarAction"
+                                text="Planificar Ruta"
+                                style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px;" />
+
+                        <Button fx:id="btnEditar"
+                                text="Editar Selección"
+                                style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px;" />
+
+                        <Button fx:id="btnVolver"
+                                onAction="#btnVolverAction"
+                                text="Volver"
+                                style="-fx-background-color: #DC143C; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px;" />
+                    </HBox>
+
+                </VBox>
+            </TitledPane>
+
+        </VBox>
+    </center>
+
+</BorderPane>
